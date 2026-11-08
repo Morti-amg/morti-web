@@ -220,3 +220,9 @@ textarea.field { min-height: 90px; resize: vertical; }
 .splash .logo { font-size: 38px; animation: appear .9s both; }
 .install { position: fixed; inset-inline: 12px; bottom: calc(var(--tab-h) + var(--safe-b) + 24px); z-index: 30; max-width: 520px; margin: 0 auto; }
 @media (min-width: 900px) { body { font-size: 17px; } }
+
+/* Safari/iOS: backdrop-filter flattens 3D, so the flipped card showed a mirrored front face */
+.flip-in.glass { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(28,28,32,.92); }
+.face { -webkit-transform-style: flat; }
+.face.back { -webkit-transform: rotateY(180deg) translateZ(1px); transform: rotateY(180deg) translateZ(1px); }
+.face:not(.back) { transform: translateZ(1px); }
