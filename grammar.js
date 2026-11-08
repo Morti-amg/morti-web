@@ -12,10 +12,10 @@ export async function loadGrammar(force = false) {
 }
 const pick = (g, base) => (g[base + '_' + lang] || g[base + '_en'] || g[base + '_fa'] || g[base + '_de'] || g[base + '_es'] || '').trim();
 const UI = {
-  fa: { title: 'گرامر', empty: 'هنوز درس گرامری برای این زبان نیست.', ex: 'مثال‌ها', all: 'همه', back: 'بازگشت', next: 'درس بعدی', prev: 'درس قبلی', locked: 'این درس قفل است', lockedText: 'برای دیدن این درس، سطح {0} را باز کن.', price: 'قیمت', soon: 'پرداخت به‌زودی فعال می‌شود.' },
-  de: { title: 'Grammatik', empty: 'Für diese Sprache gibt es noch keine Grammatik.', ex: 'Beispiele', all: 'Alle', back: 'Zurück', next: 'Nächste Lektion', prev: 'Vorherige Lektion', locked: 'Diese Lektion ist gesperrt', lockedText: 'Schalte die Stufe {0} frei, um diese Lektion zu sehen.', price: 'Preis', soon: 'Die Bezahlung wird bald freigeschaltet.' },
-  en: { title: 'Grammar', empty: 'No grammar lessons for this language yet.', ex: 'Examples', all: 'All', back: 'Back', next: 'Next lesson', prev: 'Previous lesson', locked: 'This lesson is locked', lockedText: 'Unlock level {0} to see this lesson.', price: 'Price', soon: 'Payment will be available soon.' },
-  es: { title: 'Gramática', empty: 'Aún no hay lecciones de gramática para este idioma.', ex: 'Ejemplos', all: 'Todos', back: 'Volver', next: 'Siguiente lección', prev: 'Lección anterior', locked: 'Esta lección está bloqueada', lockedText: 'Desbloquea el nivel {0} para ver esta lección.', price: 'Precio', soon: 'El pago estará disponible pronto.' },
+  fa: { title: 'گرامر', empty: 'هنوز درس گرامری برای این زبان نیست.', ex: 'مثال‌ها', all: 'همه', back: 'بازگشت', next: 'درس بعدی', prev: 'درس قبلی', locked: 'این درس قفل است', lockedText: 'برای دیدن این درس، سطح {0} را باز کن.', price: 'قیمت', soon: 'پرداخت به‌زودی فعال می‌شود.', buy: 'خرید سطح', buyErr: 'پرداخت شروع نشد. دوباره امتحان کن.', paidOk: 'پرداخت انجام شد ✓ اگر هنوز قفل است، چند ثانیه بعد صفحه را رفرش کن.' },
+  de: { title: 'Grammatik', empty: 'Für diese Sprache gibt es noch keine Grammatik.', ex: 'Beispiele', all: 'Alle', back: 'Zurück', next: 'Nächste Lektion', prev: 'Vorherige Lektion', locked: 'Diese Lektion ist gesperrt', lockedText: 'Schalte die Stufe {0} frei, um diese Lektion zu sehen.', price: 'Preis', soon: 'Die Bezahlung wird bald freigeschaltet.', buy: 'Stufe kaufen', buyErr: 'Die Zahlung konnte nicht gestartet werden. Bitte erneut versuchen.', paidOk: 'Zahlung erfolgreich ✓ Falls noch gesperrt, die Seite in ein paar Sekunden neu laden.' },
+  en: { title: 'Grammar', empty: 'No grammar lessons for this language yet.', ex: 'Examples', all: 'All', back: 'Back', next: 'Next lesson', prev: 'Previous lesson', locked: 'This lesson is locked', lockedText: 'Unlock level {0} to see this lesson.', price: 'Price', soon: 'Payment will be available soon.', buy: 'Buy level', buyErr: 'Could not start the payment. Please try again.', paidOk: 'Payment successful ✓ If it is still locked, reload the page in a few seconds.' },
+  es: { title: 'Gramática', empty: 'Aún no hay lecciones de gramática para este idioma.', ex: 'Ejemplos', all: 'Todos', back: 'Volver', next: 'Siguiente lección', prev: 'Lección anterior', locked: 'Esta lección está bloqueada', lockedText: 'Desbloquea el nivel {0} para ver esta lección.', price: 'Precio', soon: 'El pago estará disponible pronto.', buy: 'Comprar nivel', buyErr: 'No se pudo iniciar el pago. Inténtalo de nuevo.', paidOk: 'Pago realizado ✓ Si sigue bloqueado, recarga la página en unos segundos.' },
 };
 const L = () => UI[lang] || UI.en;
 const topbar = (title, back) => h('div', { class: 'topbar' }, back ? h('button', { class: 'back', onclick: () => { location.hash = back; } }, '‹') : null, h('h1', null, title));
@@ -35,7 +35,9 @@ export function grammarListView(root, params) {
   const head = h('div', { class: 'stack' }), body = h('div', { class: 'stack' });
   root.append(h('div', { class: 'page stack' }, topbar(`${LEARN[language].flag} ${L().title}`, '#/'), head, body));
   mount(body, spinner());
-  loadGrammar().then(all => {
+  const returned = /[?&]paid=1/.test(location.search);
+  if (returned) { toast(L().paidOk, true); try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
+  loadGrammar(returned).then(all => {
     const mine = all.filter(g => g.language === language);
     const draw = () => {
       mount(head, h('div', { class: 'chips' },
@@ -68,9 +70,19 @@ export function grammarLessonView(root, params) {
         h('div', { style: { fontSize: '44px' } }, '🔒'), h('div', { class: 'bold' }, L().locked),
         h('div', { class: 'mute' }, L().lockedText.replace('{0}', LEARN[g.language].flag + ' ' + g.level)));
       mount(host, topbar(pick(g, 'title'), `#/grammar/${g.language}`), box);
-      api.fetch(`level_access?language=eq.${g.language}&level=eq.${g.level}&select=price_eur`).then(r => {
-        if (r[0] && r[0].price_eur != null) box.append(h('div', { class: 'bold' }, `${L().price}: ${Number(r[0].price_eur).toFixed(2)} €`));
-        box.append(h('div', { class: 'tiny mute' }, L().soon));
+      api.fetch(`level_access?language=eq.${g.language}&level=eq.${g.level}&select=price_eur,paid`).then(r => {
+        if (r[0] && r[0].price_eur != null && r[0].paid) {
+          const price = Number(r[0].price_eur).toFixed(2);
+          const buy = h('button', { class: 'btn primary' }, `${L().buy} ${g.level} — ${price} €`);
+          buy.addEventListener('click', async () => {
+            buy.disabled = true;
+            try {
+              const res = await api.fn('create-checkout', { language: g.language, level: g.level, return_url: location.origin + location.pathname });
+              location.href = res.url;
+            } catch (e) { toast(L().buyErr); buy.disabled = false; }
+          });
+          box.append(buy);
+        } else box.append(h('div', { class: 'tiny mute' }, L().soon));
       }).catch(() => {});
       return;
     }

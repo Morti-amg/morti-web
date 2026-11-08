@@ -129,6 +129,15 @@ export const api = {
     }
   },
   fetch(path) { return this.rest(path); },
+  /** Calls a Supabase Edge Function as the signed-in user. */
+  async fn(name, body) {
+    await this.refreshIfNeeded();
+    return send(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + session.accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    });
+  },
   async fetchAll(path) {
     const all = []; let offset = 0; const page = 1000;
     for (;;) {
