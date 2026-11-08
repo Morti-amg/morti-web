@@ -1,9 +1,9 @@
 // Offline shell: the app files are cached, data always comes from Supabase.
 const CACHE = 'morti-web-v1';
-const FILES = ['./', 'index.html', 'css/app.css', 'manifest.webmanifest',
-  'js/main.js', 'js/config.js', 'js/i18n.js', 'js/i18n-data.js', 'js/api.js', 'js/store.js', 'js/study.js', 'js/ui.js',
-  'js/chat.js', 'js/views-auth.js', 'js/views-user.js', 'js/views-admin.js', 'js/csv.js',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
+const FILES = ['./', 'index.html', 'app.css', 'manifest.webmanifest',
+  'main.js', 'config.js', 'i18n.js', 'i18n-data.js', 'api.js', 'store.js', 'study.js', 'ui.js',
+  'chat.js', 'views-auth.js', 'views-user.js', 'views-admin.js', 'csv.js',
+  'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
