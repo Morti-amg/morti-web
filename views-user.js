@@ -116,6 +116,10 @@ export function homeView(root, params, ctx) {
       h('span', { style: { fontSize: '30px' } }, '🧠'),
       h('div', { class: 'grow' }, h('div', { class: 'bold' }, T('home_review_card')), h('div', { class: 'mute small' }, T('rv_due', due))),
       h('span', { class: 'mute' }, lang === 'fa' ? '‹' : '›')),
+    h('a', { class: 'glass link appear row', href: '#/grammar/' + learnLang },
+      h('span', { style: { fontSize: '30px' } }, '📘'),
+      h('div', { class: 'grow' }, h('div', { class: 'bold' }, ({ fa: 'گرامر', de: 'Grammatik', en: 'Grammar', es: 'Gramática' })[lang] || 'Grammar'), h('div', { class: 'mute small' }, LEARN[learnLang].flag + ' ' + LEARN[learnLang].title)),
+      h('span', { class: 'mute' }, lang === 'fa' ? '‹' : '›')),
     cards,
     h('button', { class: 'btn primary', onclick: wordOfDayModal }, T('word_of_day'))));
 }

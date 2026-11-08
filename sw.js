@@ -2,7 +2,7 @@
 const CACHE = 'morti-web-v1';
 const FILES = ['./', 'index.html', 'app.css', 'manifest.webmanifest',
   'main.js', 'config.js', 'i18n.js', 'i18n-data.js', 'api.js', 'store.js', 'study.js', 'ui.js',
-  'chat.js', 'views-auth.js', 'views-user.js', 'views-admin.js', 'csv.js',
+  'chat.js', 'views-auth.js', 'views-user.js', 'views-admin.js', 'csv.js', 'grammar.js',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

@@ -4,6 +4,7 @@ import { api } from './api.js';
 import { h, mount, toast, setAccent, currentAccent, clear } from './ui.js';
 import { authView } from './views-auth.js';
 import { homeView, lessonView, reviewView, leaderboardView, inboxView, userChatView, profileView } from './views-user.js';
+import { grammarListView, grammarLessonView, adminGrammarView } from './grammar.js';
 import { dashboardView, adminChatsView, adminChatThreadView, usersView, userDetailView, wordsView, messagesView, tickerView, eventsView } from './views-admin.js';
 
 applyDir();
@@ -12,16 +13,17 @@ setAccent(currentAccent());
 const app = document.getElementById('app');
 
 const ROUTES = {
+  grammar: grammarListView, gram: grammarLessonView, 'a-grammar': adminGrammarView,
   home: homeView, lesson: lessonView, review: reviewView, leaderboard: leaderboardView,
   inbox: inboxView, chat: userChatView, profile: profileView,
   admin: dashboardView, 'a-chats': adminChatsView, 'a-chat': adminChatThreadView, 'a-users': usersView,
   'a-user': userDetailView, 'a-words': wordsView, 'a-messages': messagesView, 'a-ticker': tickerView, 'a-events': eventsView,
 };
-const TAB_OF = { home: 'home', lesson: 'home', review: 'home', leaderboard: 'home', inbox: 'inbox', chat: 'chat', profile: 'profile',
+const TAB_OF = { grammar: 'home', gram: 'home', 'a-grammar': 'admin', home: 'home', lesson: 'home', review: 'home', leaderboard: 'home', inbox: 'inbox', chat: 'chat', profile: 'profile',
   admin: 'admin', 'a-ticker': 'admin', 'a-events': 'admin', 'a-chats': 'a-chats', 'a-chat': 'a-chats', 'a-users': 'a-users', 'a-user': 'a-users',
   'a-words': 'a-words', 'a-messages': 'a-messages' };
 
-const ADMIN_ROUTES = new Set(['admin', 'a-chats', 'a-chat', 'a-users', 'a-user', 'a-words', 'a-messages', 'a-ticker', 'a-events']);
+const ADMIN_ROUTES = new Set(['a-grammar', 'admin', 'a-chats', 'a-chat', 'a-users', 'a-user', 'a-words', 'a-messages', 'a-ticker', 'a-events']);
 let cleanup = null;
 let shell = null;
 

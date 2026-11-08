@@ -54,6 +54,7 @@ export function dashboardView(root) {
       statCard(learners.length, 'کل کاربران'), statCard(activeToday, 'فعال امروز'), statCard(store.words.length, 'لغت و جمله'), statCard(totalPoints, 'مجموع امتیازها', true)),
     online,
     link('#/a-ticker', '📣', 'نوار متحرک بالای اپ', 'یک جملهٔ انگیزشی یا خبر برای همهٔ کاربران'),
+    link('#/a-grammar', '📘', 'درس‌های گرامر', 'وارد کردن فایل CSV گرامر (آلمانی، انگلیسی، اسپانیایی)'),
     link('#/a-events', '🔑', 'تغییرات و درخواست‌های حساب', 'تغییر نام، ایمیل، رمز عبور و درخواست کمک کاربران', eventsCount),
     store.unreadFromUsers > 0 ? h('div', { class: 'card row' }, '🔔', h('b', null, `${store.unreadFromUsers} پیام جدید از ${store.unreadUsersCount} کاربر`)) : null,
     h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'ثبت‌نام ۷ روز اخیر'),
