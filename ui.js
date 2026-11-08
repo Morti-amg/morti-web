@@ -1,6 +1,14 @@
 import { T, LANGS, lang as currentLang, setLang } from './i18n.js';
 
 /** Tiny element builder: h('div', {class:'x', onclick: fn}, child, 'text') */
+// DOM append() would print arrays as "[object HTMLDivElement]" and null as "null": flatten and skip empties.
+(() => {
+  const native = Element.prototype.append;
+  Element.prototype.append = function (...items) {
+    return native.apply(this, items.flat(Infinity).filter(x => x !== null && x !== undefined && x !== false));
+  };
+})();
+
 export function h(tag, attrs, ...children) {
   const el = document.createElement(tag);
   if (attrs) {
