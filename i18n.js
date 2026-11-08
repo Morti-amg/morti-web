@@ -23,6 +23,7 @@ export function setLang(code) {
   lang = code;
   try { localStorage.setItem('uiLang', code); } catch (e) {}
   applyDir();
+  try { window.dispatchEvent(new CustomEvent('morti-langchange', { detail: code })); } catch (e) {}
 }
 
 export function applyDir() {

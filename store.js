@@ -54,6 +54,7 @@ export const store = {
       api.fetch('messages?select=*&order=created_at.desc'),
     ]);
     this.accounts = profiles; this.words = words; this.messages = msgs;
+    if (!this._langSynced) { this._langSynced = true; api.setUserLang(lang).catch(() => {}); }
     this.currentID = uid;
     study.load(uid);
     await Promise.all([this.refreshChat(), this.refreshTicker()]);
@@ -91,7 +92,7 @@ export const store = {
     if (f.password.length < 6) throw new UserError(T('err_pw_short'));
     if (f.password !== f.confirm) throw new UserError(T('err_pw_mismatch'));
     if (!f.consent) throw new UserError(T('err_consent'));
-    const meta = { full_name: name, phone: ph, country: f.country, native_language: f.native, learning: f.learning, level: f.level };
+    const meta = { full_name: name, phone: ph, country: f.country, native_language: f.native, learning: f.learning, level: f.level, lang };
     let signedIn;
     try { signedIn = await api.signUp(e, f.password, meta); } catch (x) { throw mapAuth(x); }
     if (!signedIn) throw new UserError(T('err_confirm'));
@@ -370,3 +371,6 @@ export function tickerLive(t) {
   if (t.expires_at && new Date(t.expires_at) < new Date()) return false;
   return !!tickerText(t);
 }
+
+// keep the e-mail language in sync when the user switches the app language
+try { window.addEventListener('morti-langchange', e => { if (api.session) api.setUserLang(e.detail).catch(() => {}); }); } catch (e) {}

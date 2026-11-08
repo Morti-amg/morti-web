@@ -84,6 +84,11 @@ export const api = {
     }
   },
   async requestPasswordReset(email) { await auth('recover', { email }); },
+  /** Stores the chosen app language in the user's metadata so e-mails (reset code ...) come in that language. */
+  async setUserLang(code) {
+    if (!session) return;
+    await auth('user', { data: { lang: code } }, 'PUT', session.accessToken);
+  },
   async resetPassword(email, code, newPassword) {
     session = parseSession(await auth('verify', { type: 'recovery', email, token: code }));
     persist();
