@@ -1,7 +1,7 @@
 import { T, LEARN, LEVELS, lang } from './i18n.js';
 import { api } from './api.js';
 import { store } from './store.js';
-import { h, clear, mount, modal, toast, confirmBox, spinner, Speech } from './ui.js';
+import { h, clear, mount, modal, toast, confirmBox, spinner, Speech, select } from './ui.js';
 
 // ---------- data (loaded on demand, cached) ----------
 let cache = null;
@@ -113,6 +113,50 @@ export function parseGrammarCSV(text) {
   return out;
 }
 
+
+// ---------- manual editor (admin) ----------
+function openGrammarEditor(g, done) {
+  const isNew = !g;
+  g = g || { language: 'de', level: 'A1', sort: 1, examples: '' };
+  const state = { language: g.language, level: g.level };
+  const mk = (ph, v, rows, dir) => { const t = h('textarea', { class: 'field', rows: String(rows), placeholder: ph, dir: dir || 'auto' }); t.value = v || ''; return t; };
+  const sortIn = h('input', { class: 'field', type: 'number', min: '1', value: String(g.sort || 1), dir: 'ltr' });
+  const titles = { fa: mk('عنوان · فارسی', g.title_fa, 1, 'rtl'), de: mk('Titel · Deutsch', g.title_de, 1, 'ltr'), en: mk('Title · English', g.title_en, 1, 'ltr'), es: mk('Título · Español', g.title_es, 1, 'ltr') };
+  const bodies = { fa: mk('توضیح · فارسی', g.body_fa, 6, 'rtl'), de: mk('Erklärung · Deutsch', g.body_de, 6, 'ltr'), en: mk('Explanation · English', g.body_en, 6, 'ltr'), es: mk('Explicación · Español', g.body_es, 6, 'ltr') };
+  const exLines = (g.examples || '').split(' ;; ').filter(Boolean).join('\n');
+  const examples = mk('Ich bin müde. | من خسته‌ام. | Ich bin müde. | I am tired. | Estoy cansado.', exLines, 6, 'ltr');
+  const m = modal((body, close) => {
+    const save = h('button', { class: 'btn primary' }, 'ذخیره');
+    save.addEventListener('click', async () => {
+      const row = {
+        language: state.language, level: state.level, sort: parseInt(sortIn.value, 10),
+        title_fa: titles.fa.value.trim(), title_de: titles.de.value.trim(), title_en: titles.en.value.trim(), title_es: titles.es.value.trim(),
+        body_fa: bodies.fa.value.trim(), body_de: bodies.de.value.trim(), body_en: bodies.en.value.trim(), body_es: bodies.es.value.trim(),
+        examples: examples.value.split('\n').map(x => x.trim()).filter(Boolean).map(x => x.replace(/;;/g, ';')).join(' ;; '),
+      };
+      if (!Number.isFinite(row.sort)) return toast('شمارهٔ ترتیب را وارد کن');
+      if (!row.title_fa && !row.title_en && !row.title_de && !row.title_es) return toast('حداقل یک عنوان لازم است');
+      save.disabled = true;
+      try {
+        await api.upsert('grammar?on_conflict=language,level,sort', [row]);
+        toast('ذخیره شد ✓', true); await loadGrammar(true); close(); done && done();
+      } catch (e) { toast(e.message || 'خطا'); save.disabled = false; }
+    });
+    body.append(h('div', { class: 'stack' },
+      h('div', { class: 'row', style: { gap: '8px' } },
+        select(Object.keys(LEARN).map(k => ({ value: k, label: LEARN[k].flag + ' ' + k.toUpperCase() })), state.language, v => { state.language = v; }),
+        select(LEVELS.map(l => ({ value: l, label: l })), state.level, v => { state.level = v; }),
+        sortIn),
+      h('div', { class: 'tiny mute' }, 'زبان یادگیری · سطح · شمارهٔ ترتیب (اگر همان شماره را دوباره ذخیره کنی، درس قبلی به‌روز می‌شود)'),
+      titles.fa, titles.de, titles.en, titles.es,
+      bodies.fa, bodies.de, bodies.en, bodies.es,
+      h('div', { class: 'small bold' }, 'مثال‌ها (هر مثال یک خط)'),
+      h('div', { class: 'tiny mute', style: { direction: 'ltr' } }, 'جمله | فارسی | آلمانی | English | Español'),
+      examples, save));
+  }, { title: isNew ? 'درس جدید' : 'ویرایش درس' });
+  return m;
+}
+
 // ---------- admin ----------
 export function adminGrammarView(root) {
   const host = h('div', { class: 'stack' });
@@ -143,6 +187,11 @@ export function adminGrammarView(root) {
     const cnt = {}; all.forEach(g => { const k = g.language + ' ' + g.level; cnt[k] = (cnt[k] || 0) + 1; });
     mount(host, h('div', { class: 'card stack' }, h('div', { class: 'bold' }, `کل درس‌ها: ${all.length}`),
       Object.keys(cnt).sort().map(k => h('div', { class: 'row between small' }, h('span', null, (LEARN[k.split(' ')[0]].flag) + ' ' + k.split(' ')[1]), h('b', null, String(cnt[k]))))),
+      h('button', { class: 'btn primary', onclick: () => openGrammarEditor(null, paint) }, '＋ نوشتن درس جدید'),
+      all.map(g => h('div', { class: 'card row between' },
+        h('div', { class: 'grow' }, h('div', { class: 'tiny mute' }, `${LEARN[g.language].flag} ${g.level} · ${g.sort}`), h('div', { class: 'small bold' }, g.title_fa || g.title_en || g.title_de || g.title_es)),
+        h('button', { class: 'btn ghost small', onclick: () => openGrammarEditor(g, paint) }, 'ویرایش'),
+        h('button', { class: 'btn danger small', onclick: async () => { if (await confirmBox('این درس حذف شود؟', 'حذف')) { await api.delete('grammar?id=eq.' + g.id); await loadGrammar(true); paint(); } } }, 'حذف'))),
       all.length ? h('button', { class: 'btn danger small', onclick: async () => { if (await confirmBox('همهٔ درس‌های گرامر حذف شود؟', 'حذف')) { await api.delete('grammar?id=not.is.null'); paint(); } } }, 'حذف همهٔ درس‌ها') : null);
   }
   page.append(h('div', { class: 'topbar' }, h('button', { class: 'back', onclick: () => { location.hash = '#/admin'; } }, '‹'), h('h1', null, 'درس‌های گرامر')),
