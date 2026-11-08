@@ -7,15 +7,15 @@ import { h, clear, mount, modal, toast, confirmBox, spinner, Speech, select } fr
 let cache = null;
 export async function loadGrammar(force = false) {
   if (cache && !force) return cache;
-  cache = await api.fetchAll('grammar?select=*&order=language.asc,level.asc,sort.asc');
+  cache = await api.fetchAll('grammar_view?select=*&order=language.asc,level.asc,sort.asc');
   return cache;
 }
 const pick = (g, base) => (g[base + '_' + lang] || g[base + '_en'] || g[base + '_fa'] || g[base + '_de'] || g[base + '_es'] || '').trim();
 const UI = {
-  fa: { title: 'گرامر', empty: 'هنوز درس گرامری برای این زبان نیست.', ex: 'مثال‌ها', all: 'همه', back: 'بازگشت', next: 'درس بعدی', prev: 'درس قبلی' },
-  de: { title: 'Grammatik', empty: 'Für diese Sprache gibt es noch keine Grammatik.', ex: 'Beispiele', all: 'Alle', back: 'Zurück', next: 'Nächste Lektion', prev: 'Vorherige Lektion' },
-  en: { title: 'Grammar', empty: 'No grammar lessons for this language yet.', ex: 'Examples', all: 'All', back: 'Back', next: 'Next lesson', prev: 'Previous lesson' },
-  es: { title: 'Gramática', empty: 'Aún no hay lecciones de gramática para este idioma.', ex: 'Ejemplos', all: 'Todos', back: 'Volver', next: 'Siguiente lección', prev: 'Lección anterior' },
+  fa: { title: 'گرامر', empty: 'هنوز درس گرامری برای این زبان نیست.', ex: 'مثال‌ها', all: 'همه', back: 'بازگشت', next: 'درس بعدی', prev: 'درس قبلی', locked: 'این درس قفل است', lockedText: 'برای دیدن این درس، سطح {0} را باز کن.', price: 'قیمت', soon: 'پرداخت به‌زودی فعال می‌شود.' },
+  de: { title: 'Grammatik', empty: 'Für diese Sprache gibt es noch keine Grammatik.', ex: 'Beispiele', all: 'Alle', back: 'Zurück', next: 'Nächste Lektion', prev: 'Vorherige Lektion', locked: 'Diese Lektion ist gesperrt', lockedText: 'Schalte die Stufe {0} frei, um diese Lektion zu sehen.', price: 'Preis', soon: 'Die Bezahlung wird bald freigeschaltet.' },
+  en: { title: 'Grammar', empty: 'No grammar lessons for this language yet.', ex: 'Examples', all: 'All', back: 'Back', next: 'Next lesson', prev: 'Previous lesson', locked: 'This lesson is locked', lockedText: 'Unlock level {0} to see this lesson.', price: 'Price', soon: 'Payment will be available soon.' },
+  es: { title: 'Gramática', empty: 'Aún no hay lecciones de gramática para este idioma.', ex: 'Ejemplos', all: 'Todos', back: 'Volver', next: 'Siguiente lección', prev: 'Lección anterior', locked: 'Esta lección está bloqueada', lockedText: 'Desbloquea el nivel {0} para ver esta lección.', price: 'Precio', soon: 'El pago estará disponible pronto.' },
 };
 const L = () => UI[lang] || UI.en;
 const topbar = (title, back) => h('div', { class: 'topbar' }, back ? h('button', { class: 'back', onclick: () => { location.hash = back; } }, '‹') : null, h('h1', null, title));
@@ -43,7 +43,7 @@ export function grammarListView(root, params) {
         LEVELS.filter(l => mine.some(g => g.level === l)).map(l => h('button', { class: 'chip' + (level === l ? ' on' : ''), onclick: () => { level = l; draw(); } }, l))));
       const shown = mine.filter(g => !level || g.level === level);
       mount(body, shown.length ? h('div', { class: 'card list' }, shown.map(g => h('a', { href: `#/gram/${g.id}`, class: 'list-item', style: { color: 'inherit', textDecoration: 'none' } },
-        h('span', { class: 'pill' }, g.level), h('div', { class: 'grow bold' }, pick(g, 'title')), h('span', { class: 'mute' }, lang === 'fa' ? '‹' : '›'))))
+        h('span', { class: 'pill' }, g.level), h('div', { class: 'grow bold' }, (g.locked ? '🔒 ' : '') + pick(g, 'title')), h('span', { class: 'mute' }, lang === 'fa' ? '‹' : '›'))))
         : h('div', { class: 'empty' }, L().empty));
     };
     draw();
@@ -63,6 +63,17 @@ export function grammarLessonView(root, params) {
     const i = sibs.findIndex(x => x.id === g.id);
     const exs = parseExamples(g.examples);
     const speech = LEARN[g.language].speech;
+    if (g.locked) {
+      const box = h('div', { class: 'card stack', style: { textAlign: 'center' } },
+        h('div', { style: { fontSize: '44px' } }, '🔒'), h('div', { class: 'bold' }, L().locked),
+        h('div', { class: 'mute' }, L().lockedText.replace('{0}', LEARN[g.language].flag + ' ' + g.level)));
+      mount(host, topbar(pick(g, 'title'), `#/grammar/${g.language}`), box);
+      api.fetch(`level_access?language=eq.${g.language}&level=eq.${g.level}&select=price_eur`).then(r => {
+        if (r[0] && r[0].price_eur != null) box.append(h('div', { class: 'bold' }, `${L().price}: ${Number(r[0].price_eur).toFixed(2)} €`));
+        box.append(h('div', { class: 'tiny mute' }, L().soon));
+      }).catch(() => {});
+      return;
+    }
     mount(host,
       topbar(pick(g, 'title'), `#/grammar/${g.language}`),
       h('div', { class: 'row' }, h('span', { class: 'pill' }, LEARN[g.language].flag + ' ' + g.level)),
@@ -124,6 +135,7 @@ function openGrammarEditor(g, done) {
   const titles = { fa: mk('عنوان · فارسی', g.title_fa, 1, 'rtl'), de: mk('Titel · Deutsch', g.title_de, 1, 'ltr'), en: mk('Title · English', g.title_en, 1, 'ltr'), es: mk('Título · Español', g.title_es, 1, 'ltr') };
   const bodies = { fa: mk('توضیح · فارسی', g.body_fa, 6, 'rtl'), de: mk('Erklärung · Deutsch', g.body_de, 6, 'ltr'), en: mk('Explanation · English', g.body_en, 6, 'ltr'), es: mk('Explicación · Español', g.body_es, 6, 'ltr') };
   const exLines = (g.examples || '').split(' ;; ').filter(Boolean).join('\n');
+  const freeCb = h('input', { type: 'checkbox' }); freeCb.checked = !!g.is_free;
   const examples = mk('Ich bin müde. | من خسته‌ام. | Ich bin müde. | I am tired. | Estoy cansado.', exLines, 6, 'ltr');
   const m = modal((body, close) => {
     const save = h('button', { class: 'btn primary' }, 'ذخیره');
@@ -132,6 +144,7 @@ function openGrammarEditor(g, done) {
         language: state.language, level: state.level, sort: parseInt(sortIn.value, 10),
         title_fa: titles.fa.value.trim(), title_de: titles.de.value.trim(), title_en: titles.en.value.trim(), title_es: titles.es.value.trim(),
         body_fa: bodies.fa.value.trim(), body_de: bodies.de.value.trim(), body_en: bodies.en.value.trim(), body_es: bodies.es.value.trim(),
+        is_free: freeCb.checked,
         examples: examples.value.split('\n').map(x => x.trim()).filter(Boolean).map(x => x.replace(/;;/g, ';')).join(' ;; '),
       };
       if (!Number.isFinite(row.sort)) return toast('شمارهٔ ترتیب را وارد کن');
@@ -150,11 +163,96 @@ function openGrammarEditor(g, done) {
       h('div', { class: 'tiny mute' }, 'زبان یادگیری · سطح · شمارهٔ ترتیب (اگر همان شماره را دوباره ذخیره کنی، درس قبلی به‌روز می‌شود)'),
       titles.fa, titles.de, titles.en, titles.es,
       bodies.fa, bodies.de, bodies.en, bodies.es,
+      h('label', { class: 'row small', style: { gap: '8px' } }, freeCb, 'رایگان (حتی اگر سطح پولی باشد)'),
       h('div', { class: 'small bold' }, 'مثال‌ها (هر مثال یک خط)'),
       h('div', { class: 'tiny mute', style: { direction: 'ltr' } }, 'جمله | فارسی | آلمانی | English | Español'),
       examples, save));
   }, { title: isNew ? 'درس جدید' : 'ویرایش درس' });
   return m;
+}
+
+
+// ---------- admin: locks, prices, who has access ----------
+export function adminAccessView(root) {
+  const host = h('div', { class: 'stack' });
+  root.append(h('div', { class: 'page wide stack' },
+    h('div', { class: 'topbar' }, h('button', { class: 'back', onclick: () => { location.hash = '#/admin'; } }, '‹'), h('h1', null, 'قفل و قیمت')),
+    host));
+  const LANGS = ['de', 'en', 'es'];
+  async function paint() {
+    mount(host, spinner());
+    let settings, access, ents;
+    try {
+      [settings, access, ents] = await Promise.all([
+        api.fetch('app_settings?select=*'), api.fetch('level_access?select=*'),
+        api.fetch('entitlements?select=*&order=created_at.desc&limit=200')]);
+    } catch (e) { mount(host, h('div', { class: 'red small' }, 'جدول‌ها پیدا نشد. اول فایل sql/paywall.sql را در Supabase اجرا کن.')); return; }
+    const on = (settings.find(x => x.key === 'paywall_enabled') || {}).value === 'true';
+    const rows = {};
+    LANGS.forEach(l => LEVELS.forEach(v => { const r = access.find(a => a.language === l && a.level === v); rows[l + v] = { language: l, level: v, paid: r ? r.paid : v !== 'A1', price_eur: r && r.price_eur != null ? String(r.price_eur) : '', product_id: r ? r.product_id : '' }; }));
+
+    const sw = h('button', { class: 'btn ' + (on ? 'danger' : 'primary') }, on ? 'قفل‌ها روشن است — خاموش کن' : 'قفل‌ها خاموش است — روشن کن');
+    sw.addEventListener('click', async () => {
+      if (!on && !(await confirmBox('قفل‌ها روشن شود؟ کاربران بدون پرداخت یا دسترسی، درس‌های پولی را نمی‌بینند.', 'روشن کن', false))) return;
+      try { await api.upsert('app_settings?on_conflict=key', [{ key: 'paywall_enabled', value: on ? 'false' : 'true' }]); toast('ذخیره شد ✓', true); paint(); } catch (e) { toast(e.message || 'خطا'); }
+    });
+
+    const lvlRows = [];
+    LANGS.forEach(l => {
+      lvlRows.push(h('div', { class: 'bold', style: { marginTop: '8px' } }, LEARN[l].flag + ' ' + l.toUpperCase()));
+      LEVELS.forEach(v => {
+        const r = rows[l + v];
+        const sel = select([{ value: 'free', label: 'رایگان' }, { value: 'paid', label: 'پولی' }], r.paid ? 'paid' : 'free', x => { r.paid = x === 'paid'; });
+        const price = h('input', { class: 'field', type: 'number', step: '0.01', min: '0', placeholder: 'قیمت €', value: r.price_eur, dir: 'ltr', style: { maxWidth: '110px' } });
+        price.addEventListener('input', () => { r.price_eur = price.value; });
+        const pid = h('input', { class: 'field', placeholder: 'App Store product id', value: r.product_id, dir: 'ltr' });
+        pid.addEventListener('input', () => { r.product_id = pid.value.trim(); });
+        lvlRows.push(h('div', { class: 'row', style: { gap: '8px', flexWrap: 'wrap' } }, h('span', { class: 'pill' }, v), sel, price, pid));
+      });
+    });
+    const saveAll = h('button', { class: 'btn primary' }, 'ذخیرهٔ سطح‌ها و قیمت‌ها');
+    saveAll.addEventListener('click', async () => {
+      saveAll.disabled = true;
+      try {
+        await api.upsert('level_access?on_conflict=language,level', Object.values(rows).map(r => ({ language: r.language, level: r.level, paid: r.paid, price_eur: r.price_eur === '' ? null : Number(r.price_eur), product_id: r.product_id })));
+        toast('ذخیره شد ✓', true);
+      } catch (e) { toast(e.message || 'خطا'); }
+      saveAll.disabled = false;
+    });
+
+    // grant access by e-mail
+    const em = h('input', { class: 'field', placeholder: 'ایمیل کاربر', dir: 'ltr', type: 'email', autocapitalize: 'none' });
+    const gl = { language: 'de', level: 'A2' };
+    const days = h('input', { class: 'field', type: 'number', min: '1', placeholder: 'روز (خالی = همیشه)', dir: 'ltr' });
+    const grant = h('button', { class: 'btn primary' }, 'باز کردن برای این کاربر');
+    grant.addEventListener('click', async () => {
+      const email = em.value.trim().toLowerCase(); if (!email) return toast('ایمیل را وارد کن');
+      grant.disabled = true;
+      try {
+        const u = await api.fetch('profiles?select=id,email&email=eq.' + encodeURIComponent(email));
+        if (!u.length) { toast('کاربری با این ایمیل پیدا نشد'); grant.disabled = false; return; }
+        const d = parseInt(days.value, 10);
+        await api.upsert('entitlements?on_conflict=user_id,language,level', [{ user_id: u[0].id, language: gl.language, level: gl.level, source: 'admin', expires_at: Number.isFinite(d) ? new Date(Date.now() + d * 86400000).toISOString() : null }]);
+        toast('باز شد ✓', true); paint();
+      } catch (e) { toast(e.message || 'خطا'); grant.disabled = false; }
+    });
+    const emailOf = id => { const a = (store.accounts || []).find(x => x.id === id); return a ? a.email : id.slice(0, 8); };
+
+    mount(host,
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'قفل‌ها'),
+        h('div', { class: 'small mute' }, 'تا وقتی خاموش باشد، همهٔ درس‌ها برای همه رایگان است. هر درس را می‌توانی در ویرایشش «رایگان» کنی.'), sw),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'سطح‌ها و قیمت‌ها'), lvlRows, saveAll),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'باز کردن دستی برای یک کاربر'), em,
+        h('div', { class: 'row', style: { gap: '8px' } },
+          select([{ value: 'all', label: 'همهٔ زبان‌ها' }, ...LANGS.map(l => ({ value: l, label: LEARN[l].flag + ' ' + l.toUpperCase() }))], gl.language, v => { gl.language = v; }),
+          select([{ value: 'ALL', label: 'همهٔ سطح‌ها' }, ...LEVELS.map(v => ({ value: v, label: v }))], gl.level, v => { gl.level = v; })),
+        days, grant),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, `دسترسی‌های داده‌شده: ${ents.length}`),
+        ents.map(e => h('div', { class: 'row between small' },
+          h('div', { class: 'grow', dir: 'ltr' }, `${emailOf(e.user_id)} · ${e.language} ${e.level}${e.expires_at ? ' · تا ' + e.expires_at.slice(0, 10) : ''} · ${e.source}`),
+          h('button', { class: 'btn danger small', onclick: async () => { if (await confirmBox('این دسترسی حذف شود؟', 'حذف')) { await api.delete('entitlements?id=eq.' + e.id); paint(); } } }, 'حذف')))));
+  }
+  paint();
 }
 
 // ---------- admin ----------
