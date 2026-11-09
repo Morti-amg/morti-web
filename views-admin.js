@@ -289,7 +289,7 @@ function csvModal(onDone) {
       if (ok) { toast(`${result.words.length} مورد ذخیره شد ✓`, true); close(); onDone && onDone(); } else { importBtn.disabled = false; importBtn.textContent = `وارد کردن ${result.words.length} مورد`; }
     });
     body.append(fileInput, h('button', { class: 'btn ghost', onclick: () => fileInput.click() }, 'انتخاب فایل CSV'),
-      h('div', { class: 'small mute', style: { direction: 'ltr' } }, 'language,level,topic,text,fa,de,en,es,example'), out, importBtn);
+      h('div', { class: 'small mute', style: { direction: 'ltr' } }, 'language,level,topic,text,fa,de,en,es,example   (language: de en es fr it tr sv)'), out, importBtn);
   }, { title: 'وارد کردن CSV' });
 }
 

@@ -89,7 +89,7 @@ export const store = {
     const name = f.fullName.trim(), e = f.email.trim().toLowerCase(), ph = f.phone.trim();
     if (!name || !ph) throw new UserError(T('err_empty'));
     if (!e.includes('@') || !e.includes('.')) throw new UserError(T('err_bad_email'));
-    if (f.password.length < 6) throw new UserError(T('err_pw_short'));
+    if (f.password.length < 8) throw new UserError(T('err_pw_short'));
     if (f.password !== f.confirm) throw new UserError(T('err_pw_mismatch'));
     if (!f.consent) throw new UserError(T('err_consent'));
     const meta = { full_name: name, phone: ph, country: f.country, native_language: f.native, learning: f.learning, level: f.level, lang };
@@ -109,7 +109,7 @@ export const store = {
   async resetPassword(email, code, pw, confirm) {
     const e = email.trim().toLowerCase(), c = code.trim();
     if (!c) throw new UserError(T('err_empty'));
-    if (pw.length < 6) throw new UserError(T('err_pw_short'));
+    if (pw.length < 8) throw new UserError(T('err_pw_short'));
     if (pw !== confirm) throw new UserError(T('err_pw_mismatch'));
     try { await api.resetPassword(e, c, pw); } catch (x) {
       if (x instanceof ApiError && [400, 401, 403, 422].includes(x.status)) {
@@ -123,7 +123,7 @@ export const store = {
     emit('auth');
   },
   async changePassword(pw, confirm) {
-    if (pw.length < 6) throw new UserError(T('err_pw_short'));
+    if (pw.length < 8) throw new UserError(T('err_pw_short'));
     if (pw !== confirm) throw new UserError(T('err_pw_mismatch'));
     try { await api.updatePassword(pw); } catch (x) { throw mapAuth(x); }
   },

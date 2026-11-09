@@ -1,4 +1,4 @@
-import { T, LANGS, lang as currentLang, setLang } from './i18n.js';
+import { T, UI_LANGS, lang as currentLang, setLang } from './i18n.js';
 
 /** Tiny element builder: h('div', {class:'x', onclick: fn}, child, 'text') */
 // DOM append() would print arrays as "[object HTMLDivElement]" and null as "null": flatten and skip empties.
@@ -82,6 +82,9 @@ export function field(placeholder, opts = {}) {
     autocomplete: opts.autocomplete || 'off', inputmode: opts.inputmode, dir: opts.dir || 'auto',
     autocapitalize: opts.caps || 'none', autocorrect: 'off', spellcheck: 'false',
   });
+  if (opts.type === 'password' && opts.noReveal) {
+    input.input = input; return input;
+  }
   if (opts.type === 'password') {
     const eye = h('button', { type: 'button', class: 'eye', onclick: () => {
       input.type = input.type === 'password' ? 'text' : 'password'; eye.textContent = input.type === 'password' ? '👁' : '🙈';
@@ -163,7 +166,7 @@ export function setAccent(name) {
 }
 
 export function languageSelect() {
-  return select(LANGS.map(l => ({ value: l.code, label: l.name })), currentLang, code => {
+  return select(UI_LANGS.map(l => ({ value: l.code, label: l.name })), currentLang, code => {
     setLang(code);
     window.dispatchEvent(new Event('morti:rerender'));
   }, 'lang-select');

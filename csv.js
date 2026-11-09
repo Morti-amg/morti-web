@@ -54,6 +54,10 @@ function langFrom(t) {
     case 'de': case 'german': case 'deutsch': case 'آلمانی': return 'de';
     case 'en': case 'english': case 'englisch': case 'انگلیسی': return 'en';
     case 'es': case 'spanish': case 'español': case 'espanol': case 'spanisch': case 'اسپانیایی': return 'es';
+    case 'fr': case 'french': case 'französisch': case 'franzoesisch': case 'français': case 'francais': case 'فرانسوی': return 'fr';
+    case 'it': case 'italian': case 'italienisch': case 'italiano': case 'ایتالیایی': return 'it';
+    case 'tr': case 'turkish': case 'türkisch': case 'tuerkisch': case 'türkçe': case 'turkce': case 'ترکی': return 'tr';
+    case 'sv': case 'swedish': case 'schwedisch': case 'svenska': case 'سوئدی': return 'sv';
     default: return null;
   }
 }
@@ -71,7 +75,7 @@ export function parseCSVWords(input) {
   rows.slice(1).forEach((r, i) => {
     const line = i + 2;
     const lang = langFrom(v(r, cLang));
-    if (!lang) { out.errors.push(`خط ${line}: زبان درست نیست (باید de یا en یا es باشد)`); return; }
+    if (!lang) { out.errors.push(`خط ${line}: زبان درست نیست (باید de, en, es, fr, it, tr یا sv باشد)`); return; }
     const text = v(r, cText);
     if (!text) { out.errors.push(`خط ${line}: ستون text خالی است`); return; }
     const lv = (v(r, cLevel) || 'A1').toUpperCase();
