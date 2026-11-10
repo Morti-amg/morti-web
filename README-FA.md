@@ -1,4 +1,4 @@
-# Morti Language — نسخهٔ وب (PWA)
+# MORTI///STYLE — نسخهٔ وب (PWA)
 
 همان اپ، با همان Supabase و همان حساب‌ها. به اپ iOS هیچ دست‌زده نشده.
 
