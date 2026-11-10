@@ -144,10 +144,17 @@ export function mediaBlobCache() {
 export const getMedia = mediaBlobCache();
 
 export function logo(small = false) {
-  return h('div', { class: 'logo' + (small ? ' small' : '') },
+  const word = () => h('div', { class: 'logo' },
     h('span', { class: 'logo-t' }, 'MORTI'),
-    h('span', { class: 'slashes' }, h('i'), h('i'), h('i'), h('i')),
-    small ? null : h('span', { class: 'logo-t' }, 'AMG'));
+    h('span', { class: 'slashes' }, h('i'), h('i'), h('i')),
+    h('span', { class: 'logo-s' }, 'STYLE'));
+  if (small) { const l = word(); l.classList.add('small'); return l; }
+  return h('div', { class: 'logo-full' },
+    h('div', { class: 'gline fa' }, h('span', {}, 'زبان بیاموز با مورتی')),
+    h('div', { class: 'mbadge' }, h('b', {}, 'M'), h('span', { class: 'slashes' }, h('i'), h('i'), h('i'))),
+    word(),
+    h('div', { class: 'gline' }, h('span', {}, 'SPRACHEN LERNEN MIT MORTI')),
+    h('div', { class: 'gline' }, h('span', {}, 'LEARN LANGUAGES WITH MORTI')));
 }
 
 // ---------- accent color ----------

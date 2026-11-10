@@ -1,5 +1,5 @@
 // Offline shell: the app files are cached, data always comes from Supabase.
-const CACHE = 'morti-web-v6';
+const CACHE = 'morti-web-v9';
 const FILES = ['./', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/main.js', 'js/config.js', 'js/i18n.js', 'js/i18n-data.js', 'js/i18n-extra.js', 'js/api.js', 'js/store.js', 'js/study.js', 'js/ui.js',
   'js/chat.js', 'js/views-auth.js', 'js/views-user.js', 'js/views-admin.js', 'js/csv.js', 'js/grammar.js',

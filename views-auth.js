@@ -31,7 +31,7 @@ export function authView(root) {
       fullName: field(T('full_name'), { caps: 'words', autocomplete: 'name' }),
       email: field(T('email'), { type: 'email', inputmode: 'email', autocomplete: 'email', dir: 'ltr' }),
       phone: field(T('phone'), { type: 'tel', inputmode: 'tel', autocomplete: 'tel', dir: 'ltr' }),
-      password: field(T('password'), { type: 'password', autocomplete: isRegister ? 'new-password' : 'current-password', dir: 'ltr' }),
+      password: field(T('password'), { type: 'password', autocomplete: isRegister ? 'new-password' : 'current-password', dir: 'ltr', noReveal: !isRegister }),
       confirm: field(T('password_repeat'), { type: 'password', autocomplete: 'new-password', dir: 'ltr' }),
     };
     let country = COUNTRIES[0], native = NATIVE_LANGS[0], learning = 'de', level = 'A1', consent = false;
@@ -60,7 +60,6 @@ export function authView(root) {
     root.append(h('div', { class: 'stack', style: { maxWidth: '460px', margin: '0 auto' } },
       h('div', { class: 'row', style: { justifyContent: 'flex-end' } }, languageSelect()),
       h('div', { class: 'center', style: { padding: '14px 0 6px' } }, logo()),
-      h('div', { class: 'center mute', style: { marginTop: '-6px' } }, 'زبان بیاموز با مورتی'),
       h('h2', { class: 'center' }, isRegister ? T('register') : T('login')),
       isRegister ? f.fullName : null,
       f.email,
