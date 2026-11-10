@@ -10,7 +10,9 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Vazirmatn", Tahoma, Arial, sans-serif; }
-body { overscroll-behavior-y: none; }
+body { overscroll-behavior-y: none; overflow-x: hidden; position: relative; max-width: 100%; }
+html { overflow-x: hidden; max-width: 100%; }
+.page, .page > * { min-width: 0; max-width: 100%; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 h1, h2, h3, p { margin: 0; }
@@ -97,7 +99,7 @@ h1, h2, h3, p { margin: 0; }
 .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
 .seg button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 8px 4px; font-size: 14px; color: var(--mute); }
-.seg.marquee { max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; background: color-mix(in srgb, var(--card) 70%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.seg.marquee { width: 100%; min-width: 0; max-width: 100%; contain: inline-size; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; background: color-mix(in srgb, var(--card) 70%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .seg.marquee::-webkit-scrollbar { display: none; }
 .seg.marquee button { flex: 0 0 auto; white-space: nowrap; padding: 8px 14px; }
 .seg button.on { background: color-mix(in srgb, var(--accent) 85%, #000); color: #fff; font-weight: 700; }
