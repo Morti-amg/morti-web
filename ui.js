@@ -1,4 +1,5 @@
 import { T, UI_LANGS, lang as currentLang, setLang } from './i18n.js';
+import { api } from './api.js';
 
 /** Tiny element builder: h('div', {class:'x', onclick: fn}, child, 'text') */
 // DOM append() would print arrays as "[object HTMLDivElement]" and null as "null": flatten and skip empties.
@@ -194,4 +195,14 @@ export function marqueeBar(buttons) {
   }
   requestAnimationFrame(tick);
   return bar;
+}
+
+/** Round profile photo with a gold ring; shows the first letter until the photo has loaded. */
+export function avatar(a, size = 44, ring = true) {
+  const el = h('div', { class: 'avatar' + (ring ? ' ring' : ''), style: { width: size + 'px', height: size + 'px', fontSize: Math.round(size * 0.42) + 'px' } },
+    ((a && a.full_name) || '?').trim().charAt(0).toUpperCase());
+  if (a && a.avatar_path) {
+    getMedia(api, 'avatars', a.avatar_path).then(url => { el.style.backgroundImage = `url(${url})`; el.textContent = ''; }).catch(() => {});
+  }
+  return el;
 }

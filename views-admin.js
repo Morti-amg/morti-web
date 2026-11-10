@@ -1,7 +1,7 @@
 import { T, LEARN, LEVELS, TOPIC_KEYS, topicFa, LANGS } from './i18n.js';
 import { api } from './api.js';
 import { store, on, wordShown, uuid, tickerLive, msgTitle } from './store.js';
-import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, formatDate, marqueeBar } from './ui.js';
+import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, formatDate, marqueeBar, avatar } from './ui.js';
 import { chatPanel } from './chat.js';
 import { newWord, parseBulk, parseCSVWords, bulkOrder } from './csv.js';
 
@@ -80,7 +80,7 @@ export function adminChatsView(root) {
     }).sort((a, b) => new Date(b.last.created_at) - new Date(a.last.created_at));
     mount(host, threads.length ? threads.map(t => {
       const a = store.accounts.find(x => x.id === t.uid);
-      return h('a', { href: '#/a-chat/' + t.uid, class: 'card link row' }, dot(a && store.isOnline(a)),
+      return h('a', { href: '#/a-chat/' + t.uid, class: 'card link row' }, avatar(a || {}, 44, false), dot(a && store.isOnline(a)),
         h('div', { class: 'grow' }, h('div', { class: 'bold' }, a ? a.full_name : t.uid.slice(0, 8)),
           h('div', { class: 'mute small', style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, (t.last.from_admin ? '↩ ' : '') + t.last.body)),
         t.unread ? h('span', { class: 'pill', style: { color: '#fff', background: 'var(--accent)' } }, String(t.unread)) : null);
@@ -109,7 +109,7 @@ export function usersView(root) {
     const users = store.learners.filter(a => (!onlineOnly || store.isOnline(a)) &&
       (!q || [a.full_name, a.email, a.phone].some(s => (s || '').toLowerCase().includes(q))));
     mount(list, users.length ? users.map(a => h('a', { href: '#/a-user/' + a.id, class: 'list-item', style: { color: 'inherit', textDecoration: 'none' } },
-      dot(store.isOnline(a)),
+      avatar(a, 46, false), dot(store.isOnline(a)),
       h('div', { class: 'grow' }, h('div', { class: 'bold' }, a.full_name), h('div', { class: 'mute tiny' }, `${LEARN[a.learning].flag} ${a.level} · ${a.country}`)),
       a.is_blocked ? h('span', { class: 'red tiny' }, 'مسدود') : null, h('b', { class: 'gold' }, String(a.points)))) : h('div', { class: 'empty' }, 'کاربری پیدا نشد'));
   }
@@ -123,6 +123,7 @@ export function userDetailView(root, [uid]) {
   if (!a) { root.append(page(bar('کاربر', { back: '#/a-users' }), h('div', { class: 'empty' }, 'پیدا نشد'))); return; }
   const kv = (k, v) => h('div', { class: 'kv' }, h('span', null, k), h('span', { style: { direction: 'ltr', textAlign: 'end' } }, v));
   root.append(page(bar(a.full_name, { back: '#/a-users' }),
+    h('div', { class: 'center', style: { display: 'flex', justifyContent: 'center' } }, avatar(a, 120)),
     h('div', { class: 'card' }, kv('ایمیل', a.email), kv('تلفن', a.phone), kv('کشور', a.country), kv('زبان مادری', a.native_language),
       kv('در حال یادگیری', `${LEARN[a.learning].flag} ${a.level}`), kv('امتیاز', a.points), kv('رکورد روزانه', a.streak), kv('لغت‌های یادگرفته', a.learned_ids.length),
       kv('عضویت', formatDate(a.joined_at)), kv('آخرین فعالیت', lastSeenText(a.last_active)), kv('رضایت حریم خصوصی', a.consent_at ? formatDate(a.consent_at) : '—')),

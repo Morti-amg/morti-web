@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { store, on, wordShown, msgTitle, msgBody, UserError } from './store.js';
 import { study, GRADES } from './study.js';
 import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, Speech, haptic, getMedia, formatDate,
-  ACCENTS, currentAccent, setAccent, languageSelect, logo, marqueeBar } from './ui.js';
+  ACCENTS, currentAccent, setAccent, languageSelect, logo, marqueeBar, avatar } from './ui.js';
 import { chatPanel } from './chat.js';
 import { privacyModal } from './views-auth.js';
 
@@ -438,8 +438,8 @@ export function profileView(root) {
   const info = (k, v) => h('div', { class: 'kv' }, h('span', null, k), h('span', null, v));
 
   root.append(h('div', { class: 'page stack' },
-    h('div', { class: 'glass center stack', style: { gap: '4px' } },
-      h('div', { class: 'big' }, a.full_name), h('div', { class: 'mute' }, a.email), h('div', null, h('span', { class: 'pill' }, '⭐ ' + a.points))),
+    h('div', { class: 'glass center stack', style: { gap: '4px', alignItems: 'center' } },
+      avatarPicker(a), h('div', { class: 'big' }, a.full_name), h('div', { class: 'mute' }, a.email), h('div', null, h('span', { class: 'pill' }, '⭐ ' + a.points))),
     h('div', { class: 'grid2' }, stat(a.streak, T('stat_streak')), stat(a.learned_ids.length, T('stat_learned'))),
     h('div', { class: 'glass' }, levelBar()),
     h('div', { class: 'grid3' }, stat(study.bestStreak, T('xp_best_streak')), stat(study.data.reviews, T('xp_reviews')), stat(study.data.activeDays.length, T('xp_days'))),
@@ -463,6 +463,16 @@ export function profileView(root) {
     h('button', { class: 'link-btn red', onclick: async () => {
       if (await confirmBox(T('delete_confirm'), T('delete_account')) && await confirmBox(T('delete_final'), T('delete_account'))) store.deleteAccount(a.id);
     } }, T('delete_account'))));
+}
+
+/** Profile photo with a camera button; the photo is picked from the gallery. */
+function avatarPicker(a) {
+  const input = h('input', { type: 'file', accept: 'image/*', hidden: true, onchange: async e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    try { await store.setAvatar(f); window.dispatchEvent(new Event('morti:rerender')); } catch (x) { toast(errText(x)); }
+    e.target.value = '';
+  } });
+  return h('button', { class: 'avatar-btn', 'aria-label': 'photo', onclick: () => input.click() }, avatar(a, 108), h('span', { class: 'cam' }, '📷'), input);
 }
 
 function errText(e) { return e instanceof UserError ? e.message : T('err_network'); }

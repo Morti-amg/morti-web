@@ -132,6 +132,21 @@ export const store = {
     try { await api.publicInsert('account_events', { kind: 'help_request', user_name: name.trim(), phone: phone.trim(), detail: note }); }
     catch (x) { throw new UserError(T('err_network')); }
   },
+  /** Shrinks the chosen photo (max 512 px, JPEG), uploads it to the private "avatars" bucket and saves the path. */
+  async setAvatar(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+    if (!blob) throw new UserError(T('err_network'));
+    const path = this.currentID + '/' + Date.now() + '.jpg';
+    try {
+      await api.upload('avatars', path, blob, 'image/jpeg');
+      await api.patch('profiles?id=eq.' + this.currentID, { avatar_path: path });
+    } catch (x) { throw new UserError(T('err_network')); }
+    this.current.avatar_path = path;
+  },
   async updateMyName(n) {
     n = n.trim();
     if (n.length < 2) throw new UserError(T('err_empty'));
