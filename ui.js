@@ -199,7 +199,7 @@ export function marqueeBar(buttons) {
 
 /** Round profile photo with a gold ring; shows the first letter until the photo has loaded. */
 export function avatar(a, size = 44, ring = true) {
-  const el = h('div', { class: 'avatar' + (ring ? ' ring' : ''), style: { width: size + 'px', height: size + 'px', fontSize: Math.round(size * 0.42) + 'px' } },
+  const el = h('div', { class: 'avatar' + (ring ? ' gold-ring' : ''), style: { width: size + 'px', height: size + 'px', fontSize: Math.round(size * 0.42) + 'px' } },
     ((a && a.full_name) || '?').trim().charAt(0).toUpperCase());
   if (a && a.avatar_path) {
     getMedia(api, 'avatars', a.avatar_path).then(url => { el.style.backgroundImage = `url(${url})`; el.textContent = ''; }).catch(() => {});
