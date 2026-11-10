@@ -171,3 +171,27 @@ export function languageSelect() {
     window.dispatchEvent(new Event('morti:rerender'));
   }, 'lang-select');
 }
+
+/** Language bar: stays inside the screen, scrolls slowly by itself (back and forth) and can be dragged by hand. */
+export function marqueeBar(buttons) {
+  const bar = h('div', { class: 'seg marquee', dir: 'ltr' }, buttons);
+  let paused = false, dir = 1, resume = 0, acc = 0;
+  const hold = () => { paused = true; clearTimeout(resume); };
+  const release = () => { clearTimeout(resume); resume = setTimeout(() => { paused = false; }, 2500); };
+  ['pointerdown', 'touchstart', 'wheel', 'mouseenter'].forEach(ev => bar.addEventListener(ev, hold, { passive: true }));
+  ['pointerup', 'pointercancel', 'touchend', 'mouseleave'].forEach(ev => bar.addEventListener(ev, release, { passive: true }));
+  let last = 0;
+  function tick(t) {
+    if (!bar.isConnected && last) { return; }          // stop when the view is gone
+    const dt = last ? Math.min(t - last, 50) : 16; last = t;
+    const max = bar.scrollWidth - bar.clientWidth;
+    if (!paused && max > 4) {
+      acc += dir * dt * 0.012;                          // ~12 px per second: slow
+      if (Math.abs(acc) >= 1) { const step = Math.trunc(acc); bar.scrollLeft += step; acc -= step; }
+      if (bar.scrollLeft >= max - 1) dir = -1; else if (bar.scrollLeft <= 1) dir = 1;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return bar;
+}

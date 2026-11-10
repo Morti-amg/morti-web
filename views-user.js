@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { store, on, wordShown, msgTitle, msgBody, UserError } from './store.js';
 import { study, GRADES } from './study.js';
 import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, Speech, haptic, getMedia, formatDate,
-  ACCENTS, currentAccent, setAccent, languageSelect, logo } from './ui.js';
+  ACCENTS, currentAccent, setAccent, languageSelect, logo, marqueeBar } from './ui.js';
 import { chatPanel } from './chat.js';
 import { privacyModal } from './views-auth.js';
 
@@ -323,7 +323,7 @@ export function reviewView(root) {
     const dueNow = study.dueWords(pool(), 500, 500).length;
     mount(wrap, topbar(T('rv_title'), { back: true }),
       h('div', { class: 'center', style: { fontSize: '60px' } }, '🧠'),
-      h('div', { class: 'seg' }, Object.keys(LEARN).map(c => h('button', { class: c === language ? 'on' : '', onclick: () => { language = c; intro(); } }, LEARN[c].flag + ' ' + LEARN[c].title))),
+      marqueeBar(Object.keys(LEARN).map(c => h('button', { class: c === language ? 'on' : '', onclick: () => { language = c; intro(); } }, LEARN[c].flag + ' ' + LEARN[c].title))),
       h('div', { class: 'mute center' }, dueNow === 0 ? T('rv_nothing') : T('rv_due', Math.min(dueNow, 20))),
       h('div', { class: 'glass' }, levelBar()),
       h('button', { class: 'btn primary', disabled: dueNow === 0, onclick: begin }, T('rv_start')));

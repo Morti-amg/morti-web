@@ -1,7 +1,7 @@
 import { T, LEARN, LEVELS, TOPIC_KEYS, topicFa, LANGS } from './i18n.js';
 import { api } from './api.js';
 import { store, on, wordShown, uuid, tickerLive, msgTitle } from './store.js';
-import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, formatDate } from './ui.js';
+import { h, clear, mount, field, val, select, modal, toast, confirmBox, spinner, formatDate, marqueeBar } from './ui.js';
 import { chatPanel } from './chat.js';
 import { newWord, parseBulk, parseCSVWords, bulkOrder } from './csv.js';
 
@@ -168,10 +168,11 @@ export function wordsView(root) {
     if (await confirmBox(`${selected.size} مورد حذف شود؟`, 'حذف')) { await store.deleteWords([...selected]); selected.clear(); selecting = false; selBtn.textContent = 'انتخاب'; paint(); }
   } });
   const selBtn = h('button', { class: 'btn small ghost', onclick: () => { selecting = !selecting; selected.clear(); selBtn.textContent = selecting ? 'پایان' : 'انتخاب'; paint(); } }, 'انتخاب');
-  const seg = h('div', { class: 'seg' }, [['', 'همه'], ...Object.entries(LEARN).map(([k, v]) => [k, v.flag + ' ' + v.title])].map(([k, t]) =>
+  const seg = marqueeBar([['', 'همه'], ...Object.entries(LEARN).map(([k, v]) => [k, v.flag + ' ' + v.title])].map(([k, t]) =>
     h('button', { class: k === filter ? 'on' : '', onclick: e => { filter = k; [...seg.children].forEach(b => b.classList.remove('on')); e.currentTarget.classList.add('on'); paint(); } }, t)));
+  const segHint = h('div', { class: 'mute small' }, 'زبانی را که می‌خواهی ببینی از اینجا انتخاب کن');
   root.append(page(bar('لغت‌ها و جمله‌ها', { right: h('div', { class: 'row' }, selBtn, h('button', { class: 'btn small primary', onclick: addMenu }, '＋ افزودن')) }),
-    seg, h('input', { class: 'field', placeholder: '🔍 جستجو', oninput: e => { q = e.target.value.toLowerCase(); paint(); } }),
+    seg, segHint, h('input', { class: 'field', placeholder: '🔍 جستجو', oninput: e => { q = e.target.value.toLowerCase(); paint(); } }),
     h('div', { class: 'row between' }, count, delBtn), list));
   paint();
   const off = on('data', paint);
