@@ -56,6 +56,7 @@ export function dashboardView(root) {
     link('#/a-ticker', '📣', 'نوار متحرک بالای اپ', 'یک جملهٔ انگیزشی یا خبر برای همهٔ کاربران'),
     link('#/a-grammar', '📘', 'درس‌های گرامر', 'وارد کردن فایل CSV گرامر (آلمانی، انگلیسی، اسپانیایی)'),
     link('#/a-access', '🔒', 'قفل و قیمت', 'سطح‌های پولی، قیمت، و باز کردن دسترسی برای کاربران'),
+    link('#/a-stats', '📈', 'آمار بازدید', 'چند نفر، از کدام کشور و در چه ساعتی بازدید کرده‌اند'),
     link('#/a-events', '🔑', 'تغییرات و درخواست‌های حساب', 'تغییر نام، ایمیل، رمز عبور و درخواست کمک کاربران', eventsCount),
     store.unreadFromUsers > 0 ? h('div', { class: 'card row' }, '🔔', h('b', null, `${store.unreadFromUsers} پیام جدید از ${store.unreadUsersCount} کاربر`)) : null,
     h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'ثبت‌نام ۷ روز اخیر'),
@@ -425,4 +426,51 @@ export function eventsView(root) {
   root.append(page(bar('تغییرات حساب', { back: '#/admin' }),
     h('label', { class: 'switch small' }, h('span', null, 'فقط موارد باز'), h('input', { type: 'checkbox', checked: true, onchange: e => { onlyOpen = e.target.checked; paint(); } })), host));
   load();
+}
+
+// =====================================================================
+// VISIT STATISTICS
+// =====================================================================
+const flagOf = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0))) : '🌐';
+const countryName = c => { try { return /^[A-Z]{2}$/.test(c || '') ? new Intl.DisplayNames(['fa'], { type: 'region' }).of(c) : 'نامشخص'; } catch (e) { return c || 'نامشخص'; } };
+
+export function statsView(root) {
+  const body = h('div', { class: 'stack' }, spinner());
+  let days = 30;
+  const seg = h('div', { class: 'seg' }, [[7, '۷ روز'], [30, '۳۰ روز'], [90, '۹۰ روز']].map(([d, t]) =>
+    h('button', { class: d === days ? 'on' : '', onclick: e => { days = d; [...seg.children].forEach(b => b.classList.remove('on')); e.currentTarget.classList.add('on'); load(); } }, t)));
+  async function load() {
+    mount(body, spinner());
+    let s;
+    try { s = await api.rest('rpc/visit_stats', { method: 'POST', body: { p_days: days } }); }
+    catch (e) { mount(body, h('div', { class: 'card mute' }, 'آمار پیدا نشد. اول فایل visits.sql را در Supabase اجرا کن.')); return; }
+    const hoursMap = Object.fromEntries(s.hours.map(x => [x.h, x.n]));
+    const hours = [...Array(24)].map((_, i) => hoursMap[i] || 0);
+    const hmax = Math.max(1, ...hours);
+    const dmax = Math.max(1, ...s.days.map(x => x.n));
+    const cmax = Math.max(1, ...s.countries.map(x => x.n));
+    const devName = { mobile: '📱', tablet: '📲', desktop: '💻' };
+    mount(body,
+      h('div', { class: 'grid2', style: { gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))' } },
+        statCard(s.today, 'بازدید امروز', true), statCard(s.today_unique, 'نفر امروز'), statCard(s.total, `بازدید ${days} روز`), statCard(s.unique, `نفر ${days} روز`)),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'بازدید امروز به تفکیک ساعت (به وقت آلمان)'),
+        h('div', { class: 'chart', style: { height: '100px', gap: '3px', direction: 'ltr' } }, hours.map((n, i) => h('div', null,
+          h('span', { class: 'tiny mute' }, n ? String(n) : ''), h('i', { style: { height: (n / hmax * 70 + 3) + 'px' } }), h('span', { class: 'tiny mute' }, i % 3 === 0 ? String(i) : ''))))),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'بازدید روزانه'),
+        s.days.length ? h('div', { class: 'chart', style: { gap: '3px', direction: 'ltr', overflowX: 'auto' } }, s.days.map(x => h('div', { style: { minWidth: '18px' } },
+          h('span', { class: 'tiny mute' }, String(x.n)), h('i', { style: { height: (x.n / dmax * 70 + 3) + 'px' } }), h('span', { class: 'tiny mute' }, String(x.d).slice(8)))))
+          : h('div', { class: 'mute small' }, 'هنوز بازدیدی ثبت نشده')),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'کشورها'),
+        s.countries.length ? s.countries.map(x => h('div', { class: 'stack', style: { gap: '3px' } },
+          h('div', { class: 'row between small' }, h('span', null, flagOf(x.c) + ' ' + countryName(x.c)), h('span', { class: 'mute' }, `${x.n} بازدید · ${x.u} نفر`)),
+          h('div', { class: 'bar' }, h('i', { style: { width: (x.n / cmax * 100) + '%', display: 'block', height: '100%', background: 'var(--accent)' } }))))
+          : h('div', { class: 'mute small' }, 'هنوز بازدیدی ثبت نشده')),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'از کجا آمده‌اند'),
+        s.sources.map(x => h('div', { class: 'row between small' }, h('span', null, x.s === 'direct' ? 'مستقیم' : x.s), h('span', { class: 'mute' }, String(x.n))))),
+      h('div', { class: 'card stack' }, h('div', { class: 'bold' }, 'آخرین بازدیدها'),
+        s.recent.map(x => h('div', { class: 'row small', style: { gap: '8px' } }, h('span', { class: 'mute', style: { minWidth: '92px', direction: 'ltr' } }, new Date(x.created_at).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })),
+          h('span', null, flagOf(x.country) + ' ' + countryName(x.country)), h('span', null, devName[x.device] || ''), x.signed_in ? h('span', { class: 'pill', style: { padding: '0 6px', fontSize: '10px' } }, 'عضو') : null))));
+  }
+  load();
+  root.append(page(bar('آمار بازدید', { back: '#/admin' }), seg, body));
 }

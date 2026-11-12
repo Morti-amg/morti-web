@@ -5,7 +5,8 @@ import { h, mount, toast, setAccent, currentAccent, clear } from './ui.js';
 import { authView } from './views-auth.js';
 import { homeView, lessonView, reviewView, leaderboardView, inboxView, userChatView, profileView } from './views-user.js';
 import { grammarListView, grammarLessonView, adminGrammarView, adminAccessView } from './grammar.js';
-import { dashboardView, adminChatsView, adminChatThreadView, usersView, userDetailView, wordsView, messagesView, tickerView, eventsView } from './views-admin.js';
+import { dashboardView, adminChatsView, adminChatThreadView, usersView, userDetailView, wordsView, messagesView, tickerView, eventsView, statsView } from './views-admin.js';
+import { trackVisit } from './analytics.js';
 
 applyDir();
 setAccent(currentAccent());
@@ -17,13 +18,13 @@ const ROUTES = {
   home: homeView, lesson: lessonView, review: reviewView, leaderboard: leaderboardView,
   inbox: inboxView, chat: userChatView, profile: profileView,
   admin: dashboardView, 'a-chats': adminChatsView, 'a-chat': adminChatThreadView, 'a-users': usersView,
-  'a-user': userDetailView, 'a-words': wordsView, 'a-messages': messagesView, 'a-ticker': tickerView, 'a-events': eventsView,
+  'a-user': userDetailView, 'a-words': wordsView, 'a-messages': messagesView, 'a-ticker': tickerView, 'a-events': eventsView, 'a-stats': statsView,
 };
 const TAB_OF = { grammar: 'home', gram: 'home', 'a-grammar': 'admin', 'a-access': 'admin', home: 'home', lesson: 'home', review: 'home', leaderboard: 'home', inbox: 'inbox', chat: 'chat', profile: 'profile',
-  admin: 'admin', 'a-ticker': 'admin', 'a-events': 'admin', 'a-chats': 'a-chats', 'a-chat': 'a-chats', 'a-users': 'a-users', 'a-user': 'a-users',
+  admin: 'admin', 'a-ticker': 'admin', 'a-events': 'admin', 'a-stats': 'admin', 'a-chats': 'a-chats', 'a-chat': 'a-chats', 'a-users': 'a-users', 'a-user': 'a-users',
   'a-words': 'a-words', 'a-messages': 'a-messages' };
 
-const ADMIN_ROUTES = new Set(['a-grammar', 'a-access', 'admin', 'a-chats', 'a-chat', 'a-users', 'a-user', 'a-words', 'a-messages', 'a-ticker', 'a-events']);
+const ADMIN_ROUTES = new Set(['a-grammar', 'a-access', 'admin', 'a-chats', 'a-chat', 'a-users', 'a-user', 'a-words', 'a-messages', 'a-ticker', 'a-events', 'a-stats']);
 let cleanup = null;
 let shell = null;
 
@@ -48,6 +49,7 @@ function renderShell() {
   const bar = h('nav', { class: 'tabbar' }, h('div', { class: 'tabs' }));
   app.append(ticker, view, bar);
   shell = { ticker, view, bar: bar.firstChild, isAdmin: !!me.is_admin };
+  try { localStorage.setItem('morti_admin', me.is_admin ? '1' : '0'); } catch (e) {}
   updateTicker();
   route();
 }
@@ -135,6 +137,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && st
   const wait = Math.max(0, 1300 - (Date.now() - t0));
   setTimeout(() => {
     render();
+    trackVisit(api.signedIn);
     splash.classList.add('out');
     setTimeout(() => splash.remove(), 600);
   }, wait);
